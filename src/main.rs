@@ -27,7 +27,7 @@ fn window_conf() -> Conf {
 }
 
 // resets all the needed variables to their default state and generates a new level
-fn setup(board: &mut [[i8; 16]; 16], cover: &mut [[bool; 16]; 16], flags: &mut Vec<(usize, usize)>, win: &mut bool, lose: &mut bool) {
+fn setup(board: &mut [[i8; COLS]; ROWS], cover: &mut [[bool; COLS]; ROWS], flags: &mut Vec<(usize, usize)>, win: &mut bool, lose: &mut bool) {
     *board = [[0; COLS]; ROWS];
     *cover = [[true; COLS]; ROWS];
     *flags = Vec::new();
@@ -38,7 +38,7 @@ fn setup(board: &mut [[i8; 16]; 16], cover: &mut [[bool; 16]; 16], flags: &mut V
     generate_board(board);
 }
 
-fn generate_board(board: &mut [[i8; 16]; 16]) {
+fn generate_board(board: &mut [[i8; COLS]; ROWS]) {
     let mut mine_count = 0;
 
     // keeps trying to add mines until the set amount is reached
