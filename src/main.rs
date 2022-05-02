@@ -265,7 +265,7 @@ async fn main() {
         }
 
         if grid_y >= ROWS {
-            grid_y = grid_y - (grid_y - (COLS - 1));
+            grid_y = grid_y - (grid_y - (ROWS - 1));
         }
 
         // will only check what spot the user clicked
