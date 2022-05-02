@@ -1,12 +1,20 @@
 use macroquad::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+// size of cell in pixels
 const CELL_SIZE: u16 = 40;
+
+// number of cell rows and coloumns
 const ROWS: usize = 16;
 const COLS: usize = 16;
-const OFFSET: i32 = 100;
+
+// the total number of mines
 const MINES: u16 = 40;
 
+// offset for the panel
+const OFFSET: i32 = 100;
+
+// macroquad window configuration
 fn window_conf() -> Conf {
     Conf {
         window_title: "Minesweeper".to_owned(),
@@ -18,10 +26,14 @@ fn window_conf() -> Conf {
     }
 }
 
-fn setup(board: &mut [[i8; 16]; 16], cover: &mut [[bool; 16]; 16], flags: &mut Vec<(usize, usize)>) {
+// resets all the needed variables to their default state and generates a new level
+fn setup(board: &mut [[i8; 16]; 16], cover: &mut [[bool; 16]; 16], flags: &mut Vec<(usize, usize)>, win: &mut bool, lose: &mut bool) {
     *board = [[0; COLS]; ROWS];
     *cover = [[true; COLS]; ROWS];
     *flags = Vec::new();
+
+    *win = false;
+    *lose = false;
 
     generate_board(board);
 }
@@ -29,20 +41,27 @@ fn setup(board: &mut [[i8; 16]; 16], cover: &mut [[bool; 16]; 16], flags: &mut V
 fn generate_board(board: &mut [[i8; 16]; 16]) {
     let mut mine_count = 0;
 
+    // keeps trying to add mines until the set amount is reached
     while mine_count < MINES {
+        // generates a random position for the mine
         let x = rand::gen_range(0, COLS);
         let y = rand::gen_range(0, ROWS);
 
+        // checks if that spot is already a mine,
+        // and if it is, tries again
         if board[y][x] == -1 {
             continue;
         }
 
+        // sets the spot to a mine and updates the mine count
         board[y][x] = -1;
         mine_count += 1;
 
+        // updates the surrounding cells mine counts
         for i in 0..=2 {
             for j in 0..=2 {
 
+                // skips the just set mine
                 if i == 1 && j == 1 {
                     continue;
                 }
@@ -50,6 +69,7 @@ fn generate_board(board: &mut [[i8; 16]; 16]) {
                 let x_index = x as isize + (i as isize - 1);
                 let y_index = y as isize + (j as isize - 1);
 
+                // ensures that the index is valid
                 if x_index < 0 || x_index >= COLS as isize {
                     continue;
                 }
@@ -58,6 +78,7 @@ fn generate_board(board: &mut [[i8; 16]; 16]) {
                     continue;
                 }
 
+                // only increases the mine count if the cell isnt a mine
                 if board[y_index as usize][x_index as usize] != -1 {
                     board[y_index as usize][x_index as usize] += 1;
                 }
@@ -68,16 +89,20 @@ fn generate_board(board: &mut [[i8; 16]; 16]) {
 }
 
 fn draw_panel(font: Font, num_flagged: usize) {
+    // draws the black box for the number of bombs to be written on top of
     draw_rectangle(5., 5., 195., 90., BLACK);
 
     let bombs_left = MINES as i16 - num_flagged as i16;
 
+    // checks if there are more flags than bombs and adds the "-" to the text if so
     let text = if bombs_left < 0 {
         format!("-{:0>2}", bombs_left.abs() - (bombs_left.abs() / 100 * 100))
     } else {
         format!("{:0>3}", bombs_left)
     };
 
+    // draws the numberof supposed bombs left
+    draw_text_ex("888", 5., 90., TextParams { font, font_size: 80, color: Color::new(0.9, 0.16, 0.22, 0.3), ..Default::default() });
     draw_text_ex(text.as_str(), 5., 90., TextParams { font, font_size: 80, color: RED, ..Default::default() });
 }
 
@@ -85,22 +110,30 @@ fn draw_board(board: &[[i8; COLS]; ROWS], cover: &[[bool; COLS]; ROWS], flags: &
     for i in 0..board.len() {
         for j in 0..board[i].len() {
 
+            // decides what color to draw the current cell as
             let color = if flags.contains(&(j, i)) {
+                // red if it is flagged as a bomb
                 RED
             } else if cover[i][j] {
+                // light grey if it is still covered up
                 Color::from_rgba(220, 220, 220, 255)
             } else {
+                // dark grey if it has been uncovered
                 Color::from_rgba(192, 192, 192, 255)
             };
 
+            // draws the cell
             draw_rectangle(j as f32 * CELL_SIZE as f32, i as f32 * CELL_SIZE as f32 + OFFSET as f32,
                 CELL_SIZE.into(), CELL_SIZE.into(), color);
 
+            // draws the cell outline
             draw_rectangle_lines(j as f32 * CELL_SIZE as f32, i as f32 * CELL_SIZE as f32 + OFFSET as f32,
                 CELL_SIZE.into(), CELL_SIZE.into(), 2., BLACK);
-
+            
+            // will only draw the number of surrounding bombs if the cell is uncovered
             if !cover[i][j] {
 
+                // matches the number of surrounding bombs to a specific color for the text
                 let color = match board[i][j] {
                     1 => Color::from_rgba(0, 0, 255, 255),
                     2 => Color::from_rgba(1, 127, 1, 255),
@@ -108,15 +141,17 @@ fn draw_board(board: &[[i8; COLS]; ROWS], cover: &[[bool; COLS]; ROWS], flags: &
                     4 => Color::from_rgba(1, 0, 128, 255),
                     5 => Color::from_rgba(129, 1, 2, 255),
                     6 => Color::from_rgba(0, 128, 129, 255),
-                    7 => BLACK,
+                    // draws 7, 8 and a mine as black
                     _ => BLACK
                 };
 
+                // checks if the current cell is a bomb or has no surrounding bombs
                 let text = if board[i][j] == -1 {
                     String::from("*")
                 } else if board[i][j] == 0{
                     String::from(" ")
                 } else {
+                    // if it isnt, draw the number
                     format!("{}", board[i][j])
                 };
                 
@@ -128,24 +163,31 @@ fn draw_board(board: &[[i8; COLS]; ROWS], cover: &[[bool; COLS]; ROWS], flags: &
 }
 
 fn reveal(board: &[[i8; COLS]; ROWS], cover: &mut [[bool; COLS]; ROWS], flags: &Vec<(usize, usize)>, x: usize, y: usize) {
+    // prevents the user from clicking  on a flagged cell
     if flags.contains(&(x as usize, y as usize)) {
         return;
     }
     
+    // uncoveres the current cell
     cover[y as usize][x as usize] = false;
 
+    // does not preform flood fill on non-empty cells
     if board[y as usize][x as usize] != 0 {
         return
     }
 
+    // preforms the flood fill algorithm in order to reveal all adjacent empty cells
     for i in 0..=2 {
         for j in 0..=2 {
+            // this skips the current cell
             if i == 1 && j == 1 {
                 continue;
             }
 
             let x_index = x as isize + (i as isize - 1);
             let y_index = y as isize + (j as isize - 1);
+
+            // border checking
 
             if x_index < 0 || x_index >= COLS as isize {
                 continue;
@@ -155,6 +197,7 @@ fn reveal(board: &[[i8; COLS]; ROWS], cover: &mut [[bool; COLS]; ROWS], flags: &
                 continue;
             }
 
+            // will only continue on still-covered cells
             if cover[y_index as usize][x_index as usize] == true {
                 reveal(board, cover, flags, x_index as usize, y_index as usize);
             }
@@ -163,21 +206,32 @@ fn reveal(board: &[[i8; COLS]; ROWS], cover: &mut [[bool; COLS]; ROWS], flags: &
 }
 
 fn flag(flags: &mut Vec<(usize, usize)>, cover: &[[bool; COLS]; ROWS], x: usize, y: usize) {
+    // will only flag still-covered cells
     if cover[y][x] == true {
+        // will flag the cell if it isn't already flagged
         if !flags.contains(&(x, y)) {
             flags.push((x, y));
         } else {
-            let pos = flags.iter().position(|&index| index == (x, y)).unwrap();
+            // will unflag cell if it is flagged
+            let pos = flags.iter().position(|&vals| vals == (x, y)).unwrap();
             flags.remove(pos);
         }
     }
 }
 
+fn win_check(cover: &[[bool; COLS]; ROWS]) -> bool{
+    // checks to see if the number of still-covered cells is equal to
+    // the number of mines, and if true, means that the game has been won
+    return cover.iter().flat_map(|a| a.iter()).filter(|x| **x == true).collect::<Vec<_>>().len() as u16 == MINES;
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
 
+    // seeds the rnadom number generator using the current time
     rand::srand(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64() as u64);
     
+    // loads in the fint for the mines display
     let font = load_ttf_font("./DSEG7Classic-Bold.ttf")
         .await
         .unwrap();
@@ -186,16 +240,26 @@ async fn main() {
     let mut cover: [[bool; COLS]; ROWS] = [[true; COLS]; ROWS];
     let mut flags: Vec<(usize, usize)> = Vec::new();
 
-    setup(&mut board, &mut cover, &mut flags);
+    let mut win = false;
+    let mut lose = false;
 
+    // generates the initial minefield
+    generate_board(&mut board);
+
+    // main game loop
     loop {
+        // clears the screen with a mid-grey color
         clear_background(Color::from_rgba(138, 138, 138, 255));
 
+        // gets the mouse position
         let (mouse_x, mouse_y) = mouse_position();
 
+        // converts mouse position into a position on the minefield
         let (mut grid_x, mut grid_y) = ((mouse_x / CELL_SIZE as f32).floor() as usize, 
             ((mouse_y - OFFSET as f32) / CELL_SIZE as f32).floor() as usize);
         
+        // it is possible to be 1 cell over when on the bottom and right edges,
+        // this prevents that from crashing the game
         if grid_x >= COLS {
             grid_x = grid_x - (grid_x - (COLS - 1));
         }
@@ -204,18 +268,55 @@ async fn main() {
             grid_y = grid_y - (grid_y - (COLS - 1));
         }
 
-        if mouse_y > OFFSET as f32 {
+        // will only check what spot the user clicked
+        // if the mouse is in the playing field
+        if mouse_y > OFFSET as f32 && !win && !lose{
             if is_mouse_button_pressed(MouseButton::Left) {
+                // reveals the clicked-on cell
                 reveal(&board, &mut cover, &flags, grid_x, grid_y);
+
+                // checks if the player clicked a mine
+                if board[grid_y][grid_x] == -1 {
+                    lose = true;
+                }
+
+                // checks if the player has found all the mines
+                if !lose && win_check(&cover) {
+                    win = true;
+
+                    // flags all mine positions so the player 
+                    // can see their locations easier
+                    for y in 0..cover.len() {
+                        for x in 0..cover[y].len() {
+                            if cover[y][x] == true && !flags.contains(&(x, y)) {
+                                flags.push((x, y));
+                            }
+                        }
+                    }
+                }
+
             } else if is_mouse_button_pressed(MouseButton::Right) {
                 flag(&mut flags, &cover, grid_x, grid_y);
             }
         }
 
+        // restarts tne game
+        if is_key_pressed(KeyCode::Space) {
+            setup(&mut board, &mut cover, &mut flags, &mut win, &mut lose);
+        }
+
+        // draws the panel showing the number of bombs left
         draw_panel(font, flags.len());
 
+        // displays the appropriate text if the player won or lost
+        if lose || win {
+            draw_text(format!("You {}!", if win {"Win"} else {"Lose"}).as_str(), screen_width() / 2. - 20., 70., 60., BLACK);
+        }
+
+        // draws the minefield
         draw_board(&board, &cover, &flags);
 
+        // waits for frame to end before continuing
         next_frame().await
     }
 }
