@@ -18,6 +18,14 @@ fn window_conf() -> Conf {
     }
 }
 
+fn setup(board: &mut [[i8; 16]; 16], cover: &mut [[bool; 16]; 16], flags: &mut Vec<(usize, usize)>) {
+    *board = [[0; COLS]; ROWS];
+    *cover = [[true; COLS]; ROWS];
+    *flags = Vec::new();
+
+    generate_board(board);
+}
+
 fn generate_board(board: &mut [[i8; 16]; 16]) {
     let mut mine_count = 0;
 
@@ -159,7 +167,7 @@ async fn main() {
     let mut cover: [[bool; COLS]; ROWS] = [[true; COLS]; ROWS];
     let mut flags: Vec<(usize, usize)> = Vec::new();
 
-    generate_board(&mut board);
+    setup(&mut board, &mut cover, &mut flags);
 
     loop {
         clear_background(Color::from_rgba(138, 138, 138, 255));
@@ -170,17 +178,19 @@ async fn main() {
             ((mouse_y - OFFSET as f32) / CELL_SIZE as f32).floor() as usize);
         
         if grid_x >= COLS {
-            grid_x = grid_x - (grid_x - 15);
+            grid_x = grid_x - (grid_x - (COLS - 1));
         }
 
         if grid_y >= ROWS {
-            grid_y = grid_y - (grid_y - 15);
+            grid_y = grid_y - (grid_y - (COLS - 1));
         }
 
-        if is_mouse_button_pressed(MouseButton::Left) {
-            reveal(&board, &mut cover, &flags, grid_x, grid_y);           
-        } else if is_mouse_button_pressed(MouseButton::Right) {
-            flag(&mut flags, &cover, grid_x, grid_y);
+        if mouse_y > OFFSET as f32 {
+            if is_mouse_button_pressed(MouseButton::Left) {
+                reveal(&board, &mut cover, &flags, grid_x, grid_y);           
+            } else if is_mouse_button_pressed(MouseButton::Right) {
+                flag(&mut flags, &cover, grid_x, grid_y);
+            }
         }
 
         draw_panel(font, flags.len());
