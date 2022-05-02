@@ -82,9 +82,9 @@ fn draw_board(board: &[[i8; COLS]; ROWS], cover: &[[bool; COLS]; ROWS], flags: &
             let color = if flags.contains(&(j, i)) {
                 RED
             } else if cover[i][j] {
-                Color::from_rgba(185, 185, 185, 255)
+                Color::from_rgba(220, 220, 220, 255)
             } else {
-                Color::from_rgba(138, 138, 138, 255)
+                Color::from_rgba(192, 192, 192, 255)
             };
 
             draw_rectangle(j as f32 * CELL_SIZE as f32, i as f32 * CELL_SIZE as f32 + OFFSET as f32,
@@ -95,14 +95,27 @@ fn draw_board(board: &[[i8; COLS]; ROWS], cover: &[[bool; COLS]; ROWS], flags: &
 
             if !cover[i][j] {
 
+                let color = match board[i][j] {
+                    1 => Color::from_rgba(0, 0, 255, 255),
+                    2 => Color::from_rgba(1, 127, 1, 255),
+                    3 => Color::from_rgba(255, 0, 0, 255),
+                    4 => Color::from_rgba(1, 0, 128, 255),
+                    5 => Color::from_rgba(129, 1, 2, 255),
+                    6 => Color::from_rgba(0, 128, 129, 255),
+                    7 => BLACK,
+                    _ => BLACK
+                };
+
                 let text = if board[i][j] == -1 {
                     String::from("*")
+                } else if board[i][j] == 0{
+                    String::from(" ")
                 } else {
                     format!("{}", board[i][j])
                 };
                 
                 draw_text(text.as_str(), j as f32 * CELL_SIZE as f32 + (CELL_SIZE / 3) as f32, 
-                    i as f32 * CELL_SIZE as f32 + (CELL_SIZE / 4 * 3) as f32 + OFFSET as f32, CELL_SIZE.into(), BLACK);
+                    i as f32 * CELL_SIZE as f32 + (CELL_SIZE / 4 * 3) as f32 + OFFSET as f32, CELL_SIZE.into(), color);
             }
         }
     }
