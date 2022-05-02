@@ -68,11 +68,17 @@ fn generate_board(board: &mut [[i8; 16]; 16]) {
 }
 
 fn draw_panel(font: Font, num_flagged: usize) {
-    draw_rectangle(5., 5., 130., 90., BLACK);
+    draw_rectangle(5., 5., 195., 90., BLACK);
 
-    let bombs_left = MINES - num_flagged as u16;
+    let bombs_left = MINES as i16 - num_flagged as i16;
 
-    draw_text_ex(format!("{:0>2}", bombs_left).as_str(), 5., 90., TextParams { font, font_size: 80, color: RED, ..Default::default() });
+    let text = if bombs_left < 0 {
+        format!("-{:0>2}", bombs_left.abs() - (bombs_left.abs() / 100 * 100))
+    } else {
+        format!("{:0>3}", bombs_left)
+    };
+
+    draw_text_ex(text.as_str(), 5., 90., TextParams { font, font_size: 80, color: RED, ..Default::default() });
 }
 
 fn draw_board(board: &[[i8; COLS]; ROWS], cover: &[[bool; COLS]; ROWS], flags: &Vec<(usize, usize)>) {
@@ -200,7 +206,7 @@ async fn main() {
 
         if mouse_y > OFFSET as f32 {
             if is_mouse_button_pressed(MouseButton::Left) {
-                reveal(&board, &mut cover, &flags, grid_x, grid_y);           
+                reveal(&board, &mut cover, &flags, grid_x, grid_y);
             } else if is_mouse_button_pressed(MouseButton::Right) {
                 flag(&mut flags, &cover, grid_x, grid_y);
             }
