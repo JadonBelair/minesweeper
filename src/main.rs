@@ -231,7 +231,7 @@ async fn main() {
     // seeds the rnadom number generator using the current time
     rand::srand(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64() as u64);
     
-    // loads in the fint for the mines display
+    // loads in the font for the mines display
     let font = load_ttf_font("./DSEG7Classic-Bold.ttf")
         .await
         .unwrap();
