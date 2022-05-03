@@ -9,7 +9,7 @@ const ROWS: usize = 16;
 const COLS: usize = 16;
 
 // the total number of mines
-const MINES: u16 = 10;
+const MINES: u16 = 40;
 
 // offset for the panel
 const OFFSET: i32 = 100;
