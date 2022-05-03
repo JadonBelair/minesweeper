@@ -1,4 +1,6 @@
 use macroquad::prelude::*;
+use macroquad::ui::{root_ui, widgets, UiContent};
+use std::borrow::Cow;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // size of cell in pixels
@@ -370,8 +372,12 @@ async fn main() {
             }
         }
 
+        let button = widgets::Button::new(UiContent::Label(Cow::Borrowed("Reset")))
+                    .position(vec2(screen_width() - 95., 5.))
+                    .size(vec2(90., 90.));
+
         // restarts tne game
-        if is_key_pressed(KeyCode::Space) {
+        if is_key_pressed(KeyCode::Space) || button.ui(&mut *root_ui()) {
             setup(&mut board, &mut win, &mut lose);
         }
 
