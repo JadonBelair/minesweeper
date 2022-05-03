@@ -8,6 +8,7 @@ right click - flag a spot <br>
 space - restart
 
 ## things to add
-- [ ] better win lose states
+- [x] better win lose states
 - [ ] ability to change rows/cols and number of mines
 - [ ] textures for cells and flags
+- [ ] middle click to reveal surrounding cells
