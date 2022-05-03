@@ -1,6 +1,5 @@
 use macroquad::prelude::*;
-use macroquad::ui::{root_ui, widgets, UiContent};
-use std::borrow::Cow;
+use macroquad::ui::{root_ui, widgets};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // size of cell in pixels
@@ -225,8 +224,9 @@ fn draw_board(board: &[[Cell; COLS]; ROWS]) {
 // reveals the the cell at (x, y) to the player and 
 // if the cell has no surrounding bombs any adjacent empty cels
 fn reveal(board: &mut [[Cell; COLS]; ROWS], x: usize, y: usize) {
-    // prevents the user from clicking  on a flagged cell
-    if board[y][x].flagged {
+    // prevents the user from clicking  on a flagged cell 
+    // or a cell that has already been revealed
+    if board[y][x].flagged || !board[y][x].covered {
         return;
     }
     
@@ -311,7 +311,10 @@ fn uncover_all_mines(board: &mut [[Cell; COLS]; ROWS]) {
 async fn main() {
 
     // seeds the rnadom number generator using the current time
-    rand::srand(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs_f64() as u64);
+    rand::srand(
+        SystemTime::now()
+        .duration_since(UNIX_EPOCH).unwrap()
+        .as_secs_f64() as u64);
     
     // loads in the font for the mines display
     let font = load_ttf_font("./DSEG7Classic-Bold.ttf").await.unwrap();
@@ -330,23 +333,17 @@ async fn main() {
         // gets the mouse position
         let (mouse_x, mouse_y) = mouse_position();
 
-        // converts mouse position into a position on the minefield
-        let (mut grid_x, mut grid_y) = ((mouse_x / CELL_SIZE as f32).floor() as usize,
-            ((mouse_y - OFFSET as f32) / CELL_SIZE as f32).floor() as usize);
-        
-        // it is possible to be 1 cell over when on the bottom and right edges,
-        // this prevents that from crashing the game
-        if grid_x >= COLS {
-            grid_x = grid_x - (grid_x - (COLS - 1));
-        }
-
-        if grid_y >= ROWS {
-            grid_y = grid_y - (grid_y - (ROWS - 1));
-        }
-
         // will only check what spot the user clicked
         // if the mouse is in the playing field
         if mouse_y > OFFSET as f32 && !win && !lose{
+
+            // converts mouse position into a position on the minefield
+            // and clamps it to ensure thet it doesn't crash the game
+            let grid_x = (mouse_x / CELL_SIZE as f32).floor()
+                        .clamp(0., COLS as f32 - 1.) as usize;
+            let grid_y = ((mouse_y - OFFSET as f32) / CELL_SIZE as f32)
+                        .floor().clamp(0., ROWS as f32 - 1.) as usize;
+
             if is_mouse_button_pressed(MouseButton::Left) {
                 // reveals the clicked-on cell
                 reveal(&mut board, grid_x, grid_y);
@@ -372,7 +369,7 @@ async fn main() {
             }
         }
 
-        let button = widgets::Button::new(UiContent::Label(Cow::Borrowed("Reset")))
+        let button = widgets::Button::new("Reset")
                     .position(vec2(screen_width() - 95., 5.))
                     .size(vec2(90., 90.));
 
