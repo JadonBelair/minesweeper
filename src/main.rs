@@ -317,7 +317,7 @@ async fn main() {
                 reveal(&board, &mut cover, &flags, grid_x, grid_y);
 
                 // checks if the player clicked a mine
-                if board[grid_y][grid_x] == -1 {
+                if !flags.contains(&(grid_x, grid_y)) && board[grid_y][grid_x] == -1 {
                     lose = true;
                 }
 
