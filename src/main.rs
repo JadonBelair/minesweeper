@@ -38,6 +38,7 @@ fn setup(board: &mut [[i8; COLS]; ROWS], cover: &mut [[bool; COLS]; ROWS], flags
     generate_board(board);
 }
 
+// generates a random level on the specified board
 fn generate_board(board: &mut [[i8; COLS]; ROWS]) {
     let mut mine_count = 0;
 
@@ -101,6 +102,8 @@ fn draw(font: Font, num_flagged: usize, board: &[[i8; COLS]; ROWS],
     }
 }
 
+// displays to the user how many bombs there are left, 
+// assuming that all their flags are right
 fn draw_panel(font: Font, num_flagged: usize) {
     // draws the black box for the number of bombs to be written on top of
     draw_rectangle(5., 5., 195., 90., BLACK);
@@ -114,13 +117,14 @@ fn draw_panel(font: Font, num_flagged: usize) {
         format!("{:0>3}", bombs_left)
     };
 
-    // draws the numberof supposed bombs left
+    // draws the dark red background text to show unused segments of text
     draw_text_ex("888", 5., 90., TextParams {
         font,
         font_size: 80,
         color: Color::new(0.9, 0.16, 0.22, 0.3),
         ..Default::default()});
 
+    // draws the number of supposed bombs left
     draw_text_ex(text.as_str(), 5., 90., TextParams {
         font,
         font_size: 80,
@@ -128,6 +132,7 @@ fn draw_panel(font: Font, num_flagged: usize) {
         ..Default::default()});
 }
 
+// draws the minefield to the screen
 fn draw_board(board: &[[i8; COLS]; ROWS], cover: &[[bool; COLS]; ROWS], flags: &Vec<(usize, usize)>) {
     for i in 0..board.len() {
         for j in 0..board[i].len() {
@@ -188,6 +193,8 @@ fn draw_board(board: &[[i8; COLS]; ROWS], cover: &[[bool; COLS]; ROWS], flags: &
     }
 }
 
+// reveals the the cell at (x, y) to the player and 
+// if the cell has no surrounding bombs any adjacent empty cels
 fn reveal(board: &[[i8; COLS]; ROWS], cover: &mut [[bool; COLS]; ROWS],
         flags: &Vec<(usize, usize)>, x: usize, y: usize) {
     // prevents the user from clicking  on a flagged cell
@@ -233,6 +240,7 @@ fn reveal(board: &[[i8; COLS]; ROWS], cover: &mut [[bool; COLS]; ROWS],
     }
 }
 
+// flags the cell specified at (x, y) as a bomb, but only if it hasn't been uncovered already
 fn flag(flags: &mut Vec<(usize, usize)>, cover: &[[bool; COLS]; ROWS], x: usize, y: usize) {
     // will only flag still-covered cells
     if cover[y][x] == true {
@@ -259,9 +267,10 @@ fn flag_all_mines(flags: &mut Vec<(usize, usize)>, board: &[[i8; COLS]; ROWS]) {
     }
 }
 
+// checks to see if the number of still-covered cells is equal to
+// the number of mines, and if true, means that the game has been won
 fn win_check(cover: &[[bool; COLS]; ROWS]) -> bool{
-    // checks to see if the number of still-covered cells is equal to
-    // the number of mines, and if true, means that the game has been won
+    // this is a mess, might see if there is a nicer way of doing this later
     return cover.iter()
         .flat_map(|a| a.iter())
         .filter(|x| **x == true)
