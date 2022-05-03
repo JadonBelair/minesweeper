@@ -14,7 +14,7 @@ const MINES: u16 = 10;
 // offset for the panel
 const OFFSET: i32 = 100;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy)]
 struct Cell {
     value: i8,
     covered: bool,
