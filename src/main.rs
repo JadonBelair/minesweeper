@@ -249,10 +249,10 @@ fn flag(flags: &mut Vec<(usize, usize)>, cover: &[[bool; COLS]; ROWS], x: usize,
 
 // flags all mine positions so the player 
 // can see their locations easier
-fn flag_all(flags: &mut Vec<(usize, usize)>, cover: &[[bool; COLS]; ROWS]) {
-    for y in 0..cover.len() {
-        for x in 0..cover[y].len() {
-            if cover[y][x] == true && !flags.contains(&(x, y)) {
+fn flag_all_mines(flags: &mut Vec<(usize, usize)>, board: &[[i8; COLS]; ROWS]) {
+    for y in 0..board.len() {
+        for x in 0..board[y].len() {
+            if board[y][x] == -1 && !flags.contains(&(x, y)) {
                 flags.push((x, y));
             }
         }
@@ -266,6 +266,17 @@ fn win_check(cover: &[[bool; COLS]; ROWS]) -> bool{
         .flat_map(|a| a.iter())
         .filter(|x| **x == true)
         .collect::<Vec<_>>().len() as u16 == MINES;
+}
+
+// goes through every cell and if it is a bomb, uncoveres it
+fn uncover_all_mines(board: &[[i8; COLS]; ROWS], cover: &mut [[bool; COLS]; ROWS]) {
+    for y in 0..board.len() {
+        for x in 0..board[y].len() {
+            if board[y][x] == -1 {
+                cover[y][x] = false;
+            }
+        }
+    }
 }
 
 #[macroquad::main(window_conf)]
@@ -319,6 +330,7 @@ async fn main() {
                 // checks if the player clicked a mine
                 if !flags.contains(&(grid_x, grid_y)) && board[grid_y][grid_x] == -1 {
                     lose = true;
+                    uncover_all_mines(&board, &mut cover);
                 }
 
                 // checks if the player has found all the mines
@@ -328,7 +340,7 @@ async fn main() {
 
                 // flags all the mines if the player has won
                 if win {
-                    flag_all(&mut flags, &cover);
+                    flag_all_mines(&mut flags, &board);
                 }
 
             } else if is_mouse_button_pressed(MouseButton::Right) {
